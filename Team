@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>¿Quién es más mongol?</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;800&display=swap" rel="stylesheet"/>
+
+<!-- Firebase SDKs -->
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getDatabase, ref, onValue, runTransaction, set, get } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBJwLCJKWkc8N55wM8fERJe9koD7tk5zXw",
+    authDomain: "stadistics-3d6b9.firebaseapp.com",
+    databaseURL: "https://stadistics-3d6b9-default-rtdb.firebaseio.com",
+    projectId: "stadistics-3d6b9",
+    storageBucket: "stadistics-3d6b9.firebasestorage.app",
+    messagingSenderId: "233632753022",
+    appId: "1:233632753022:web:80457b07654543c440bf2f",
+    measurementId: "G-36071QP0V5"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  // ── Jugadores (solo datos visuales, scores vienen de Firebase) ───
+  const PLAYERS = [
+    {
+      id: 1, name: "Ximena", accent: "#4a90d9",
+      svg: `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="60" cy="60" r="58" fill="#daeeff"/>
+        <path d="M22 95 Q18 60 28 40 Q34 28 60 24 Q86 28 92 40 Q102 60 98 95 L88 110 Q60 118 32 110 Z" fill="#555" stroke="none"/>
+        <ellipse cx="60" cy="66" rx="26" ry="30" fill="#f5dfc0"/>
+        <path d="M34 60 Q32 34 60 26 Q88 34 86 60" fill="#555"/>
+        <path d="M60 26 L60 42" stroke="#777" stroke-width="1.5" fill="none"/>
+        <path d="M34 60 Q28 72 26 90 Q28 100 32 108" fill="#555" stroke="none"/>
+        <path d="M86 60 Q92 72 94 90 Q92 100 88 108" fill="#555" stroke="none"/>
+        <rect x="51" y="93" width="18" height="10" rx="4" fill="#f0d0a8"/>
+        <ellipse cx="33" cy="68" rx="5" ry="6" fill="#f5dfc0"/>
+        <ellipse cx="87" cy="68" rx="5" ry="6" fill="#f5dfc0"/>
+        <circle cx="50" cy="64" r="3.5" fill="#222"/>
+        <circle cx="70" cy="64" r="3.5" fill="#222"/>
+        <circle cx="51.5" cy="62.5" r="1" fill="white"/>
+        <circle cx="71.5" cy="62.5" r="1" fill="white"/>
+        <path d="M58 70 Q60 73 62 70" stroke="#c09070" stroke-width="1.4" fill="none"/>
+        <path d="M52 79 Q60 86 68 79" stroke="#c07050" stroke-width="2" fill="none" stroke-linecap="round"/>
+      </svg>`
+    },
+    {
+      id: 2, name: "Kori", accent: "#c0007a",
+      svg: `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="60" cy="60" r="58" fill="#fce8f2"/>
+        <path d="M20 96 Q16 62 30 40 Q38 26 60 22 Q82 26 90 40 Q104 62 100 96 L90 112 Q60 120 30 112 Z" fill="#d44090" stroke="none"/>
+        <ellipse cx="60" cy="66" rx="26" ry="30" fill="#f5dfc0"/>
+        <path d="M34 58 Q32 32 60 24 Q88 32 86 58" fill="#d44090"/>
+        <path d="M60 24 L60 40" stroke="#b02070" stroke-width="1.5" fill="none"/>
+        <path d="M34 58 Q26 74 24 96 Q27 106 30 112" fill="#d44090" stroke="none"/>
+        <path d="M86 58 Q94 74 96 96 Q93 106 90 112" fill="#d44090" stroke="none"/>
+        <rect x="51" y="93" width="18" height="10" rx="4" fill="#f0d0a8"/>
+        <ellipse cx="33" cy="68" rx="5" ry="6" fill="#f5dfc0"/>
+        <ellipse cx="87" cy="68" rx="5" ry="6" fill="#f5dfc0"/>
+        <circle cx="49" cy="65" r="11" fill="rgba(255,255,255,0.6)" stroke="#d44090" stroke-width="2.5"/>
+        <circle cx="71" cy="65" r="11" fill="rgba(255,255,255,0.6)" stroke="#d44090" stroke-width="2.5"/>
+        <path d="M58 65 Q60 62 62 65" stroke="#d44090" stroke-width="2.2" fill="none"/>
+        <line x1="38" y1="63" x2="34" y2="62" stroke="#d44090" stroke-width="2"/>
+        <line x1="82" y1="63" x2="86" y2="62" stroke="#d44090" stroke-width="2"/>
+        <circle cx="49" cy="65" r="4" fill="#c0007a"/>
+        <circle cx="71" cy="65" r="4" fill="#c0007a"/>
+        <circle cx="50.5" cy="63.5" r="1.2" fill="white"/>
+        <circle cx="72.5" cy="63.5" r="1.2" fill="white"/>
+        <path d="M58 72 Q60 75 62 72" stroke="#c09070" stroke-width="1.4" fill="none"/>
+        <path d="M52 80 Q60 87 68 80" stroke="#c07050" stroke-width="2" fill="none" stroke-linecap="round"/>
+      </svg>`
+    },
+    {
+      id: 3, name: "Melani", accent: "#2ab06a",
+      svg: `<svg viewBox="0 0 680 780" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="340" cy="370" r="360" fill="#f5d4e0"/>
+        <ellipse cx="340" cy="280" rx="155" ry="130" fill="#1a1a1a"/>
+        <ellipse cx="195" cy="370" rx="52" ry="75" fill="#1a1a1a"/>
+        <ellipse cx="188" cy="450" rx="50" ry="70" fill="#1a1a1a"/>
+        <ellipse cx="198" cy="525" rx="48" ry="68" fill="#1a1a1a"/>
+        <ellipse cx="210" cy="598" rx="46" ry="65" fill="#1a1a1a"/>
+        <ellipse cx="225" cy="668" rx="44" ry="60" fill="#1a1a1a"/>
+        <ellipse cx="485" cy="370" rx="52" ry="75" fill="#1a1a1a"/>
+        <ellipse cx="492" cy="450" rx="50" ry="70" fill="#1a1a1a"/>
+        <ellipse cx="482" cy="525" rx="48" ry="68" fill="#1a1a1a"/>
+        <ellipse cx="470" cy="598" rx="46" ry="65" fill="#1a1a1a"/>
+        <ellipse cx="455" cy="668" rx="44" ry="60" fill="#1a1a1a"/>
+        <ellipse cx="240" cy="390" rx="40" ry="65" fill="#1a1a1a"/>
+        <ellipse cx="233" cy="478" rx="38" ry="62" fill="#1a1a1a"/>
+        <ellipse cx="240" cy="555" rx="38" ry="58" fill="#1a1a1a"/>
+        <ellipse cx="440" cy="390" rx="40" ry="65" fill="#1a1a1a"/>
+        <ellipse cx="447" cy="478" rx="38" ry="62" fill="#1a1a1a"/>
+        <ellipse cx="440" cy="555" rx="38" ry="58" fill="#1a1a1a"/>
+        <ellipse cx="340" cy="405" rx="128" ry="138" fill="#f2c89b"/>
+        <ellipse cx="213" cy="410" rx="25" ry="30" fill="#f2c89b"/>
+        <ellipse cx="467" cy="410" rx="25" ry="30" fill="#f2c89b"/>
+        <rect x="215" y="255" width="250" height="70" rx="8" fill="#1a1a1a"/>
+        <ellipse cx="242" cy="310" rx="28" ry="38" fill="#1a1a1a"/>
+        <ellipse cx="275" cy="322" rx="26" ry="40" fill="#1a1a1a"/>
+        <ellipse cx="308" cy="328" rx="26" ry="42" fill="#1a1a1a"/>
+        <ellipse cx="340" cy="330" rx="26" ry="43" fill="#1a1a1a"/>
+        <ellipse cx="372" cy="328" rx="26" ry="42" fill="#1a1a1a"/>
+        <ellipse cx="405" cy="322" rx="26" ry="40" fill="#1a1a1a"/>
+        <ellipse cx="435" cy="310" rx="28" ry="38" fill="#1a1a1a"/>
+        <rect x="305" y="533" width="70" height="50" rx="10" fill="#f2c89b"/>
+        <circle cx="300" cy="398" r="40" fill="white"/>
+        <circle cx="380" cy="398" r="40" fill="white"/>
+        <circle cx="300" cy="398" r="40" fill="none" stroke="#c0195c" stroke-width="8"/>
+        <circle cx="380" cy="398" r="40" fill="none" stroke="#c0195c" stroke-width="8"/>
+        <line x1="260" y1="391" x2="220" y2="388" stroke="#c0195c" stroke-width="6" stroke-linecap="round"/>
+        <line x1="420" y1="391" x2="460" y2="388" stroke="#c0195c" stroke-width="6" stroke-linecap="round"/>
+        <circle cx="300" cy="398" r="17" fill="#2ab06a"/>
+        <circle cx="380" cy="398" r="17" fill="#2ab06a"/>
+        <circle cx="308" cy="390" r="6" fill="white"/>
+        <circle cx="388" cy="390" r="6" fill="white"/>
+        <ellipse cx="340" cy="442" rx="10" ry="7" fill="#e0a876"/>
+        <path d="M312 476 Q340 503 368 476" fill="none" stroke="#a0612a" stroke-width="6" stroke-linecap="round"/>
+      </svg>`
+    },
+    {
+      id: 4, name: "Germán", accent: "#4a90d9",
+      svg: `<svg viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="160" cy="160" r="140" fill="#C7DBED"/>
+        <rect x="145" y="205" width="30" height="20" rx="8" fill="#F2D3B6"/>
+        <ellipse cx="160" cy="150" rx="70" ry="80" fill="#F2D3B6"/>
+        <path d="M90 140 Q90 60 160 60 Q230 60 230 140 Q230 110 200 105 Q180 120 160 105 Q140 120 120 105 Q90 110 90 140 Z" fill="#1F1F1F"/>
+        <circle cx="95" cy="150" r="12" fill="#F2D3B6"/>
+        <circle cx="225" cy="150" r="12" fill="#F2D3B6"/>
+        <circle cx="135" cy="150" r="6" fill="#1F1F1F"/>
+        <circle cx="185" cy="150" r="6" fill="#1F1F1F"/>
+        <circle cx="137" cy="148" r="2" fill="#fff"/>
+        <circle cx="187" cy="148" r="2" fill="#fff"/>
+        <path d="M160 150 Q155 168 165 168" stroke="#D9A98C" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M140 185 Q160 198 180 185" stroke="#C97B63" stroke-width="4" fill="none" stroke-linecap="round"/>
+      </svg>`
+    }
+  ];
+
+  // ── Estado local (se sincroniza con Firebase) ─────────────────
+  let state = PLAYERS.map(p => ({...p, score: 0}));
+  let weeklyWinner = null;
+  let dbReady = false;
+
+  // ── Refs de Firebase ──────────────────────────────────────────
+  const scoresRef = ref(db, 'mongol/scores');
+  const metaRef   = ref(db, 'mongol/meta');
+
+  // ── Escuchar cambios en tiempo real ───────────────────────────
+  onValue(scoresRef, (snapshot) => {
+    const data = snapshot.val();
+    if (data) {
+      state = state.map(p => ({
+        ...p,
+        score: data[p.id] !== undefined ? data[p.id] : 0
+      }));
+    } else {
+      // Primera vez: inicializar scores en 0
+      const initial = {};
+      PLAYERS.forEach(p => { initial[p.id] = 0; });
+      set(scoresRef, initial);
+    }
+    dbReady = true;
+    render();
+  });
+
+  onValue(metaRef, (snapshot) => {
+    const data = snapshot.val();
+    if (data) {
+      weeklyWinner = data.weeklyWinner || null;
+    }
+    render();
+  });
+
+  // ── Helpers de fecha ──────────────────────────────────────────
+  function getNextFriday15(from) {
+    const d = new Date(from);
+    const day = d.getDay();
+    const daysUntilFri = (5 - day + 7) % 7 || 7;
+    const fri = new Date(d);
+    fri.setDate(d.getDate() + daysUntilFri);
+    fri.setHours(15, 0, 0, 0);
+    if (day === 5 && d.getHours() < 15) {
+      fri.setDate(d.getDate());
+    }
+    return fri.getTime();
+  }
+
+  function isFridayShowWindow() {
+    const now = new Date();
+    return now.getDay() === 5 && now.getHours() >= 10 && now.getHours() < 15;
+  }
+
+  function isFridayResetTime() {
+    const now = new Date();
+    return now.getDay() === 5 && now.getHours() >= 15;
+  }
+
+  // ── Audio ─────────────────────────────────────────────────────
+  function playFunnySound() {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const sounds = [
+        () => {
+          const osc = ctx.createOscillator(), gain = ctx.createGain();
+          osc.connect(gain); gain.connect(ctx.destination);
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(150, ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(600, ctx.currentTime + 0.15);
+          osc.frequency.exponentialRampToValueAtTime(200, ctx.currentTime + 0.4);
+          gain.gain.setValueAtTime(0.5, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+          osc.start(); osc.stop(ctx.currentTime + 0.5);
+        },
+        () => {
+          const bufferSize = ctx.sampleRate * 0.4;
+          const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+          const data = buffer.getChannelData(0);
+          for (let i = 0; i < bufferSize; i++) data[i] = (Math.random()*2-1)*Math.pow(1-i/bufferSize,1.5);
+          const source = ctx.createBufferSource(), filter = ctx.createBiquadFilter(), gain = ctx.createGain();
+          filter.type = 'lowpass'; filter.frequency.value = 300;
+          gain.gain.setValueAtTime(0.6, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+          source.buffer = buffer;
+          source.connect(filter); filter.connect(gain); gain.connect(ctx.destination);
+          source.start();
+        },
+        () => {
+          const osc = ctx.createOscillator(), gain = ctx.createGain();
+          osc.connect(gain); gain.connect(ctx.destination);
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(800, ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(200, ctx.currentTime + 0.3);
+          osc.frequency.exponentialRampToValueAtTime(500, ctx.currentTime + 0.5);
+          gain.gain.setValueAtTime(0.4, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
+          osc.start(); osc.stop(ctx.currentTime + 0.6);
+        },
+        () => {
+          [0, 0.1, 0.2, 0.3].forEach((t, i) => {
+            const osc = ctx.createOscillator(), gain = ctx.createGain();
+            osc.connect(gain); gain.connect(ctx.destination);
+            osc.type = 'sawtooth'; osc.frequency.value = 300 + i * 80;
+            gain.gain.setValueAtTime(0, ctx.currentTime + t);
+            gain.gain.linearRampToValueAtTime(0.2, ctx.currentTime + t + 0.04);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + t + 0.09);
+            osc.start(ctx.currentTime + t); osc.stop(ctx.currentTime + t + 0.1);
+          });
+        }
+      ];
+      sounds[Math.floor(Math.random() * sounds.length)]();
+    } catch(e) {}
+  }
+
+  // ── Botón secreto (triple click = reset) ─────────────────────
+  let secretClicks = 0, secretTimer = null;
+  document.getElementById('secret-word').addEventListener('click', function() {
+    secretClicks++;
+    this.classList.remove('flash'); void this.offsetWidth; this.classList.add('flash');
+    clearTimeout(secretTimer);
+    secretTimer = setTimeout(() => { secretClicks = 0; }, 2000);
+    if (secretClicks >= 3) { secretClicks = 0; resetAll(); }
+  });
+
+  // ── Modal ganador viernes ─────────────────────────────────────
+  function showWinnerModal() {
+    const sorted = [...state].sort((a, b) => b.score - a.score);
+    const winner = sorted[0];
+    const hasAnyVotes = state.some(p => p.score > 0);
+    if (!hasAnyVotes) return;
+
+    document.getElementById('modal-winner-name').textContent = winner.name;
+    document.getElementById('modal-winner-score').textContent =
+      winner.score === 1 ? '1 voto de mongol 🤪' : `${winner.score} votos de mongol 🤪`;
+    document.getElementById('modal-avatar').innerHTML = winner.svg;
+
+    const medals = ['🥇','🥈','🥉','4️⃣'];
+    let rankHtml = '<div class="modal-ranking-title">📊 Ranking de la semana</div>';
+    sorted.forEach((p, i) => {
+      rankHtml += `<div class="modal-ranking-row">
+        <span>${medals[i] || '▪️'} ${p.name}</span>
+        <span>${p.score} pts</span>
+      </div>`;
+    });
+    document.getElementById('modal-ranking').innerHTML = rankHtml;
+
+    const nextReset = getNextFriday15(Date.now());
+    const diffMs = nextReset - Date.now();
+    const diffH = Math.floor(diffMs / 3600000);
+    const diffM = Math.floor((diffMs % 3600000) / 60000);
+    let resetMsg = diffMs > 0
+      ? (diffH > 0 ? `🔄 Reinicio automático en ${diffH}h ${diffM}m` : `🔄 Reinicio automático en ${diffM}m`)
+      : '🔄 El reinicio ocurrirá en breve';
+    document.getElementById('modal-next-reset').textContent = resetMsg;
+    document.getElementById('winner-modal').classList.add('show');
+  }
+
+  window.closeWinnerModal = function() {
+    document.getElementById('winner-modal').classList.remove('show');
+  };
+
+  // ── Reset (escribe en Firebase) ───────────────────────────────
+  async function resetAll(silent = false) {
+    // Guardar ganador en Firebase antes de borrar
+    const sorted = [...state].sort((a, b) => b.score - a.score);
+    if (state.some(p => p.score > 0)) {
+      weeklyWinner = { id: sorted[0].id, name: sorted[0].name, score: sorted[0].score };
+      await set(metaRef, { weeklyWinner, lastReset: Date.now() });
+    }
+
+    // Reiniciar scores a 0 en Firebase
+    const zeros = {};
+    PLAYERS.forEach(p => { zeros[p.id] = 0; });
+    await set(scoresRef, zeros);
+
+    if (!silent) {
+      const toast = document.getElementById('reset-toast');
+      toast.classList.add('show');
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator(), gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(600, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.6);
+        gain.gain.setValueAtTime(0.4, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.7);
+        osc.start(); osc.stop(ctx.currentTime + 0.7);
+      } catch(e) {}
+      setTimeout(() => toast.classList.remove('show'), 2000);
+    }
+  }
+
+  // ── Votar (transacción atómica en Firebase) ───────────────────
+  window.addPoint = async function(id) {
+    if (!dbReady) return;
+    const playerRef = ref(db, `mongol/scores/${id}`);
+    await runTransaction(playerRef, (current) => {
+      return (current || 0) + 1;
+    });
+    playFunnySound();
+    // El onValue actualizará el estado y re-renderizará automáticamente
+    const card = document.querySelector(`[data-id="${id}"]`);
+    if (card) { card.classList.remove('pop'); void card.offsetWidth; card.classList.add('pop'); }
+  };
+
+  // ── Render ────────────────────────────────────────────────────
+  function getLeader() {
+    return [...state].sort((a, b) => b.score - a.score)[0];
+  }
+
+  function msToReadable(ms) {
+    const d = Math.floor(ms / 86400000);
+    const h = Math.floor((ms % 86400000) / 3600000);
+    const m = Math.floor((ms % 3600000) / 60000);
+    if (d > 0) return `${d}d ${h}h`;
+    if (h > 0) return `${h}h ${m}m`;
+    return `${m}m`;
+  }
+
+  function render() {
+    const leader = getLeader();
+    const hasPoints = state.some(p => p.score > 0);
+    const infoBar = document.getElementById('info-bar');
+    let html = '';
+
+    // Indicador de conexión
+    if (!dbReady) {
+      html += `<span class="badge" style="background:#fff3cd;color:#856404">⏳ Conectando...</span>`;
+    } else {
+      html += `<span class="badge" style="background:#d4edda;color:#155724">🟢 En vivo</span>`;
+    }
+
+    if (hasPoints) html += `<span class="badge leader-badge">🏆 Va ganando: ${leader.name} (${leader.score} pts)</span>`;
+    if (weeklyWinner) html += `<span class="badge weekly-badge">🎉 Último ganador: ${weeklyWinner.name}</span>`;
+
+    const nextReset = getNextFriday15(Date.now());
+    const remaining = nextReset - Date.now();
+    if (remaining > 0) html += `<span class="badge timer-badge">🔄 Reinicio en ${msToReadable(remaining)}</span>`;
+
+    infoBar.innerHTML = html;
+
+    const grid = document.getElementById('grid');
+    grid.innerHTML = '';
+    state.forEach(p => {
+      const isLeader = hasPoints && p.id === leader.id;
+      const card = document.createElement('div');
+      card.className = 'card' + (isLeader ? ' is-leader' : '');
+      card.dataset.id = p.id;
+      card.style.setProperty('--accent', p.accent);
+      card.innerHTML = `
+        <div class="avatar-wrap">${p.svg}</div>
+        <div class="player-name">${p.name}</div>
+        <div class="score-display">${p.score === 0 ? '—' : p.score}</div>
+        <button class="btn-add" onclick="addPoint(${p.id})">😂 +1</button>
+      `;
+      grid.appendChild(card);
+    });
+  }
+
+  // ── Loop de tiempo (modal + reset automático viernes) ─────────
+  let fridayModalShown = false;
+  let fridayResetDone = false;
+
+  function tick() {
+    if (isFridayShowWindow() && !fridayModalShown) {
+      fridayModalShown = true;
+      setTimeout(showWinnerModal, 800);
+    }
+    if (isFridayResetTime() && !fridayResetDone) {
+      fridayResetDone = true;
+      if (state.some(p => p.score > 0)) {
+        resetAll(true).then(() => {
+          const toast = document.getElementById('reset-toast');
+          toast.textContent = '🔄 ¡Nueva semana!';
+          toast.classList.add('show');
+          setTimeout(() => { toast.classList.remove('show'); toast.textContent = '💥 ¡Reiniciado!'; }, 3000);
+        });
+      }
+    }
+    // Re-render solo para actualizar el badge del timer
+    render();
+  }
+
+  // Render inicial con estado vacío mientras carga Firebase
+  render();
+  tick();
+  setInterval(tick, 10000);
+</script>
+
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    min-height: 100vh;
+    background: #fff8f0;
+    overflow-x: hidden;
+  }
+
+  .bg {
+    position: fixed; inset: 0; z-index: 0;
+    background: linear-gradient(160deg, #ffe4f0 0%, #fff4c2 40%, #d4f0ff 100%);
+  }
+
+  .blob {
+    position: fixed; border-radius: 50%; filter: blur(60px); opacity: 0.45; z-index: 0;
+  }
+  .blob1 { width: 400px; height: 400px; background: #ffb3d1; top: -100px; left: -100px; animation: drift 8s ease-in-out infinite alternate; }
+  .blob2 { width: 350px; height: 350px; background: #b3e4ff; bottom: -80px; right: -80px; animation: drift 10s ease-in-out infinite alternate-reverse; }
+  .blob3 { width: 300px; height: 300px; background: #fff0a0; top: 40%; left: 30%; animation: drift 12s ease-in-out infinite alternate; }
+
+  @keyframes drift { from { transform: translate(0,0) scale(1); } to { transform: translate(30px, 20px) scale(1.08); } }
+
+  .wrapper {
+    position: relative; z-index: 1;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 32px 16px 48px;
+  }
+
+  .header { text-align: center; margin-bottom: 28px; }
+
+  h1 {
+    font-family: 'Fredoka One', cursive;
+    font-size: clamp(2rem, 6vw, 3.2rem);
+    color: #c0007a;
+    letter-spacing: 1px;
+    line-height: 1.1;
+    text-shadow: 3px 3px 0 #ffd6ec;
+  }
+
+  .secret-word {
+    cursor: pointer;
+    user-select: none;
+    display: inline-block;
+    transition: transform 0.1s;
+  }
+  .secret-word:active { transform: scale(0.92); }
+  .secret-word.flash { animation: flashRed 0.3s ease; }
+  @keyframes flashRed {
+    0% { color: #c0007a; }
+    50% { color: #ff0000; text-shadow: 0 0 12px #ff0000; }
+    100% { color: #c0007a; }
+  }
+
+  .subtitle { font-size: 1rem; color: #888; margin-top: 6px; font-weight: 600; }
+
+  .info-bar {
+    display: flex; justify-content: center; gap: 12px; flex-wrap: wrap;
+    margin-bottom: 28px;
+  }
+
+  .badge {
+    background: white;
+    border-radius: 999px;
+    padding: 8px 20px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  }
+  .badge.leader-badge { background: linear-gradient(90deg, #fff3b0, #ffd166); color: #7a4800; }
+  .badge.weekly-badge { background: linear-gradient(90deg, #b8f5c8, #52e07b); color: #0a4a20; }
+  .badge.timer-badge { background: white; color: #aaa; font-weight: 600; font-size: 0.8rem; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 20px;
+  }
+
+  .card {
+    background: white;
+    border-radius: 28px;
+    padding: 20px 16px 20px;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.07);
+    transition: transform 0.15s, box-shadow 0.15s;
+    position: relative;
+    overflow: hidden;
+    border: 2px solid transparent;
+  }
+  .card::before {
+    content: '';
+    position: absolute; inset: 0;
+    border-radius: 26px;
+    opacity: 0.05;
+    background: var(--accent);
+    pointer-events: none;
+  }
+  .card.is-leader { border-color: #ffd166; box-shadow: 0 4px 24px rgba(255,180,0,0.25); }
+  .card.is-leader::after { content: '👑'; position: absolute; top: 10px; right: 14px; font-size: 18px; }
+  .card:hover { transform: translateY(-4px) scale(1.02); box-shadow: 0 10px 32px rgba(0,0,0,0.12); }
+
+  .avatar-wrap {
+    width: 110px; height: 110px;
+    border-radius: 50%;
+    margin: 0 auto 14px;
+    overflow: visible;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .avatar-wrap svg { width: 110px; height: 110px; }
+
+  .player-name { font-family: 'Fredoka One', cursive; font-size: 1.3rem; color: #333; margin-bottom: 6px; }
+
+  .score-display {
+    font-size: 2rem; font-weight: 800; margin-bottom: 14px;
+    color: var(--accent, #c0007a); min-height: 42px; line-height: 1;
+  }
+
+  .btn-add {
+    background: var(--accent, #c0007a);
+    color: white; border: none; border-radius: 999px;
+    padding: 10px 24px; font-family: 'Nunito', sans-serif;
+    font-size: 1rem; font-weight: 700; cursor: pointer;
+    transition: transform 0.1s, filter 0.1s;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+  .btn-add:hover { filter: brightness(1.1); }
+  .btn-add:active { transform: scale(0.88); }
+
+  .pop { animation: pop 0.25s cubic-bezier(.36,.07,.19,.97); }
+  @keyframes pop {
+    0%   { transform: scale(1); }
+    40%  { transform: scale(1.18); }
+    100% { transform: scale(1); }
+  }
+
+  .reset-toast {
+    position: fixed; top: 50%; left: 50%;
+    transform: translate(-50%, -50%) scale(0.8);
+    background: #ff0055; color: white;
+    font-family: 'Fredoka One', cursive; font-size: 2rem;
+    padding: 24px 40px; border-radius: 24px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.3);
+    z-index: 999; opacity: 0; pointer-events: none; transition: all 0.3s;
+  }
+  .reset-toast.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 1000;
+    background: rgba(0,0,0,0.55);
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.4s;
+  }
+  .modal-overlay.show { opacity: 1; pointer-events: all; }
+
+  .modal-box {
+    background: white;
+    border-radius: 32px;
+    padding: 36px 32px 28px;
+    max-width: 380px; width: 90%;
+    text-align: center;
+    box-shadow: 0 12px 60px rgba(0,0,0,0.25);
+    transform: scale(0.85);
+    transition: transform 0.4s cubic-bezier(.34,1.56,.64,1);
+    position: relative;
+  }
+  .modal-overlay.show .modal-box { transform: scale(1); }
+
+  .modal-crown { font-size: 3.5rem; margin-bottom: 8px; }
+  .modal-title { font-family: 'Fredoka One', cursive; font-size: 1.5rem; color: #c0007a; margin-bottom: 4px; }
+  .modal-subtitle { font-size: 0.9rem; color: #aaa; margin-bottom: 20px; font-weight: 600; }
+  .modal-winner-name { font-family: 'Fredoka One', cursive; font-size: 2.4rem; color: #333; margin-bottom: 6px; }
+  .modal-score { font-size: 1.1rem; color: #888; font-weight: 700; margin-bottom: 20px; }
+  .modal-avatar { margin: 0 auto 16px; width: 100px; height: 100px; }
+  .modal-avatar svg { width: 100px; height: 100px; }
+
+  .modal-ranking { background: #fff8f0; border-radius: 16px; padding: 12px 16px; margin-bottom: 20px; text-align: left; }
+  .modal-ranking-title { font-family: 'Fredoka One', cursive; font-size: 1rem; color: #c0007a; margin-bottom: 8px; }
+  .modal-ranking-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 4px 0; font-size: 0.95rem; font-weight: 700; color: #555;
+    border-bottom: 1px solid #f0e0e8;
+  }
+  .modal-ranking-row:last-child { border-bottom: none; }
+  .modal-ranking-row span:last-child { color: #c0007a; }
+
+  .modal-btn {
+    background: linear-gradient(90deg, #c0007a, #e040a0);
+    color: white; border: none; border-radius: 999px;
+    padding: 12px 32px; font-family: 'Nunito', sans-serif;
+    font-size: 1rem; font-weight: 800; cursor: pointer;
+    box-shadow: 0 4px 16px rgba(192,0,122,0.3);
+    transition: filter 0.2s, transform 0.1s;
+  }
+  .modal-btn:hover { filter: brightness(1.1); }
+  .modal-btn:active { transform: scale(0.95); }
+  .modal-next-reset { font-size: 0.8rem; color: #bbb; margin-top: 12px; font-weight: 600; }
+
+  @media (max-width: 480px) {
+    .grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+    .card { padding: 14px 10px; }
+    .avatar-wrap { width: 80px; height: 80px; }
+    .avatar-wrap svg { width: 80px; height: 80px; }
+  }
+</style>
+
+</head>
+<body>
+
+<div class="bg"></div>
+<div class="blob blob1"></div>
+<div class="blob blob2"></div>
+<div class="blob blob3"></div>
+
+<div class="reset-toast" id="reset-toast">💥 ¡Reiniciado!</div>
+
+<div class="modal-overlay" id="winner-modal">
+  <div class="modal-box">
+    <div class="modal-crown">👑</div>
+    <div class="modal-title">¡Ganador de la semana!</div>
+    <div class="modal-subtitle">Resumen del viernes</div>
+    <div class="modal-avatar" id="modal-avatar"></div>
+    <div class="modal-winner-name" id="modal-winner-name"></div>
+    <div class="modal-score" id="modal-winner-score"></div>
+    <div class="modal-ranking" id="modal-ranking"></div>
+    <button class="modal-btn" onclick="closeWinnerModal()">🎉 ¡Cerrar!</button>
+    <div class="modal-next-reset" id="modal-next-reset"></div>
+  </div>
+</div>
+
+<div class="wrapper">
+  <div class="header">
+    <h1>🤪 ¿Quién es más <span class="secret-word" id="secret-word">mongol</span>?</h1>
+    <p class="subtitle">Dale +1 al más chistoso de la semana</p>
+  </div>
+  <div class="info-bar" id="info-bar">
+    <span class="badge" style="background:#fff3cd;color:#856404">⏳ Conectando con Firebase...</span>
+  </div>
+  <div class="grid" id="grid"></div>
+</div>
+
+</body>
+</html>
